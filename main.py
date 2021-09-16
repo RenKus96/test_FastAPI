@@ -14,31 +14,31 @@ import json
 
 class User(BaseModel):
     # id: Optional[int]
-    name: Optional[str] = None
-    password: Optional[str] = None
-    email: Optional[str] = None
+    name: str
+    password: str
+    email: str
     full_name: Optional[str] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
 
 class User_no_pwd(BaseModel):
     # id: Optional[int]
-    name: Optional[str] = None
-    email: Optional[str] = None
+    name: str
+    email: str
     full_name: Optional[str] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
 
 class Password(BaseModel):
-    id: int = None
-    password: Optional[str] = None
+    id: int
+    password: str
 
 class User_id(BaseModel):
-    id: int = None
+    id: int
 
 class User_update(BaseModel):
-    id: int = None
-    user: User = None
+    id: int
+    user: User
 
 users = {
     1: {
@@ -128,16 +128,11 @@ def main():
 # def get_user(user_id: int):
 #     return users[user_id]
 
-@app.get('/user/')
+@app.get('/user/', response_model=User_no_pwd)
 def get_user(param: User_id):
     user_id = param.dict()['id']
-    if user_id:
-        if users.get(user_id):
-            return users.get(user_id)
-        else:
-            return {'msg': f'User_id {user_id} not found'}
-    else:
-        return {'msg': 'Need parametrs: id'}
+    if users.get(user_id):
+        return users.get(user_id)
 
 
 # Если users типа List
@@ -170,39 +165,29 @@ def create_user(user: User):
 @app.delete('/delete-user/', response_model=Dict)
 def delete_user(param: User_id):
     user_id = param.dict()['id']
-    if user_id:
-        user = users.pop(user_id, None)
-        if user:
-            # save_users_json()
-            return {'msg': f'User {user["full_name"]} has been deleted succesfully'}
-        else:
-            return {'msg': f'User_id {user_id} not found'}
+    user = users.pop(user_id, None)
+    if user:
+        # save_users_json()
+        return {'msg': f'User {user["full_name"]} has been deleted succesfully'}
     else:
-        return {'msg': 'Need parametrs: id'}
+        return {'msg': f'User_id {user_id} not found'}
 
 
 @app.patch('/update-password/', response_model=Dict)
 def update_password(param: Password):
     pwd = param.dict()
-    if pwd['id'] and pwd['password']:
-        user = users.get(pwd['id'])
-        if user:
-            user['password'] = pwd['password']
-            users[pwd['id']] = user
-            return {'msg': f'Password for User_id {pwd["id"]} was change succesfully'}
-        else:
-            return {'msg': f'User_id {pwd["id"]} not found'}
+    user = users.get(pwd['id'])
+    if user:
+        user['password'] = pwd['password']
+        users[pwd['id']] = user
+        return {'msg': f'Password for User_id {pwd["id"]} was change succesfully'}
     else:
-        return {'msg': 'Need parametrs: id, password'}
+        return {'msg': f'User_id {pwd["id"]} not found'}
 
-@app.put('/update-user/', response_model=Union[Dict, User])
+
+@app.put('/update-user/', response_model=User_no_pwd)
 def update_password(user_upd: User_update):
     user_id = user_upd.dict()['id']
-    if user_id and user_upd.dict()['user']:
-        if users.get(user_id) :
-            users[user_id] = user_upd.dict()['user']
-            return users.get(user_id)
-        else:
-            return {'msg': f'User_id {user_id} not found'}
-    else:
-        return {'msg': 'Need parametrs: id, user'}
+    if users.get(user_id) :
+        users[user_id] = user_upd.dict()['user']
+        return users.get(user_id)
